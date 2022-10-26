@@ -1,0 +1,50 @@
+### 平台规划
+#### 单master集群
+* 一个master，多个node
+#### 多master集群 
+* 多个master，多个node
+* 需要一个负载均衡的过程
+### 硬件要求
+#### master
+* gateway:192.168.150.2
+* k8s-master01
+  * 2c、2G、40G
+  * ip:192.168.150.101
+#### node
+* gateway:192.168.150.2
+* k8s-node01:
+  * 2c、2G、40G
+  * ip:192.168.150.201
+* k8s-node02:
+  * 2c、2G、40G
+  * ip:192.168.150.202
+### 系统要求 
+- 一台或多台机器，操作系统 CentOS7.x-86_x64
+- 硬件配置：2GB 或更多 RAM，2 个 CPU 或更多 CPU，硬盘 30GB 或更多- 集群中所有机器之间网络互通
+- 可以访问外网，需要拉取镜像
+- 禁止 swap 分区
+### 安装
+1. 虚拟机上最小化安装centos7
+2. 运行update_kenel.sh脚本，更新内核
+3. 运行environment_config.sh脚背，配置环境（安装一些依赖组件、免密登录、静态ip、uuid、关闭防火墙、关闭selinux、关闭swap、开启ipvs、同步时间等）
+4. 运行containerd_install.sh脚本，安装containerd相关信息
+5. 运行k8s_prepare.sh脚本，安装kubectl、kubeadm等组件
+6. 克隆机器，
+7. 修改克隆后机器的hostname、uuid、ip
+   ```shell
+   hostnamectl set-hostname hostname
+   uuidgen
+   vi /etc/sysconfig/network-scripts/ifcfg-ens33
+   #修改ip uuid
+   ```
+8. master上运行k8s_master_install.sh脚本，安装主节点相关信息（确保最少有两个核心），使用
+   ` kubectl get nodes`测试以下，需要的时间较长，耐心等待
+9. node上运行k8s_node_install.sh脚本输出的`kubeadm join`等代码，安装工作节点相关信息，使用
+   ` kubectl get nodes`测试以下，等待所有节点均处于ready状态再继续执行
+10. 测试k8s集群，创建一个pod运行nginx
+   ```shell
+   kubectl create deployment nginx --image=nginx
+   kubectl expose deployment nginx --port=80 --type=NodePort
+   kubectl get pod,svc
+   ```
+   在浏览器中使用 http://NodeIP:Port 链接
